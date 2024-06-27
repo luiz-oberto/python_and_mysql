@@ -10,6 +10,7 @@ config = {
     'raise_on_warnings': True
 }
 
+# Carregar todas as informações do BD
 def verificar_bd():
     try:
         select_query = "SELECT * FROM item"
@@ -20,6 +21,7 @@ def verificar_bd():
     except mysql.connector.Error as err:
         print("Erro ao conectar ao banco de dados:", err)
 
+# Inserir itens no BD
 def inserir_item(name=None, quantity=None):
     try:
         insert_query = "INSERT INTO item (name, quantity) VALUES (%s, %s)"
@@ -30,6 +32,7 @@ def inserir_item(name=None, quantity=None):
     except mysql.connector.Error as err:
         print("Erro ao inserir registro no banco de dados:", err)
 
+# Atualizar itens no BD
 def atualizar_bd_name(previous_name=None, new_name=None):
     try:
         update_query = "UPDATE item SET name = %s WHERE name = %s"
@@ -40,6 +43,7 @@ def atualizar_bd_name(previous_name=None, new_name=None):
     except mysql.connector.Error as err:
         print("Erro ao atualizar o registro:", err)
 
+# Excluir itens do BD
 def excluir_item_por_id(iditem=None):
     try:
         delete_query = "DELETE FROM item WHERE iditem = %s"
@@ -50,6 +54,7 @@ def excluir_item_por_id(iditem=None):
     except mysql.connector.Error as err:
         print("Erro ao deletar o registro:", err)
 
+# Fazendo a conexão com o DB
 try:
     # Estabelecendo a conexão
     conn = mysql.connector.connect(**config)
@@ -70,6 +75,7 @@ try:
 except mysql.connector.Error as err:
     print("Erro ao conectar ao MySQL:", err)
 
+# Estabelecendo a conexão para utilização das funções
 try:
     conn = mysql.connector.connect(**config)
     cursor = conn.cursor()
@@ -88,3 +94,7 @@ print()
 excluir_item_por_id()
 print()
 verificar_bd()
+
+# Fechando a conexão 
+cursor.close()
+conn.close()

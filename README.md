@@ -1,0 +1,2 @@
+# Python and MySQL
+Este repositório foi criado com o intuito de praticar meus conhecimentos em estabelecer uma conexão python com um banco de dados MySQL que fica rodando em uma máquina virtuaa. Aproveitei também para praticar as funções de consulta, inserção, atualização e deleção (SELECT, INSERT, UPDATE, DELETE) de dados do banco. Por fim, deixo ele como um modelo de funções em que posso utilizar em projetos futuros.
