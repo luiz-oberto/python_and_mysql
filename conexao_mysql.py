@@ -48,6 +48,7 @@ def criando_cursor():
         print(f"Erro ao conectar ao MySQL: {err}")
 
 
+############### INICIAR CONEXÃO COM BD #################
 connection = testando_conexão()
 while not connection:
     try_again = input('falha na conexão, deseja tentar novamente? (s/n)')
@@ -59,6 +60,7 @@ while not connection:
         conn, cursor = None, None
         break
 
+############### CRIAR CURSOR #################
 if connection:
     conn, cursor = criando_cursor()
 else:
