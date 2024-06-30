@@ -4,10 +4,10 @@ import os
 
 # Configurações de conexão
 config = {
-    'user': 'usuario',
-    'password': 'senha@',
-    'host': 'host',  # ou 'localhost' se estiver usando port forwarding
-    'database': 'database',
+    'user': 'tester',
+    'password': 'D&vT0peir@',
+    'host': '10.200.228.19',  #9 ou 'localhost' se estiver usando port forwarding
+    'database': 'modelo-despensa',
     'raise_on_warnings': True
 }
 
@@ -35,6 +35,7 @@ def testando_conexão():
         return True
     except mysql.connector.Error as err:
         print("Erro ao conectar ao MySQL:", err)
+        return False
 
 def criando_cursor():
     try:

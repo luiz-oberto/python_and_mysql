@@ -1,23 +1,46 @@
 from conexao_mysql import testando_conexão, criando_cursor
-# from conexao_mysql import cursor, conn 
 import mysql.connector
 
-# testando_conexão()
-# criando_cursor()
-conn, cursor = criando_cursor() 
+
+connection = testando_conexão()
+while not connection:
+    try_again = input('falha na conexão, deseja tentar novamente? (s/n)')
+    if try_again == 's':
+        connection = testando_conexão()
+    else:
+        print('Encerrando programa')
+        break
+
+if connection:
+    conn, cursor = criando_cursor()
+else:
+    pass
+
+
 ################ REGISTRO E AUTENTICAÇÃO DO USUÁRIO ###############
 logged_user = False
 
+# Registrar-se
 def user_register(username, password):
     if username and password:
-        insert_query = 'INSERT INTO usuario (username, password) VALUES (%s, %s)'
+        insert_query_has_itens = 'INSERT INTO usuario (username, password) VALUES (%s, %s)'
         values = (username, password)
-        cursor.execute(insert_query, values)
+        cursor.execute(insert_query_has_itens, values)
         conn.commit()
         print('Usuário registrado com sucesso!')
+        print()
+        # criando lista
+        print(f'Bem vindo, {values[0]}! Estamos criando sua listinha.')
+        print()
+        user_id = cursor.lastrowid
+        insert_query_has_itens = "INSERT INTO has_itens (usuario_idusuario) VALUES (%s)"
+        cursor.execute(insert_query_has_itens, (user_id,))
+        conn.commit()
+        print("Lista criada com sucesso, faça bom proveito!")
     else:
         print('Valores inválidos para a criação do usuário!')
 
+# Fazer login
 def login():
     global logged_user
     username = input('insira seu nome de usuario: ')
@@ -49,6 +72,7 @@ def login_required(func):
         return func(*args, **kwargs)
     return wrapper
 
+# logout
 @login_required
 def logout():
     global logged_user
@@ -58,8 +82,9 @@ def logout():
 
 
 ################ INTERAÇÕES COM O BD ###################
+# busca todos os itens da tabela
 @login_required
-def fetch_all_items(): #-> busca todos os itens da tabela
+def fetch_all_items(): 
     try:
         select_query = "SELECT * FROM item"
         cursor.execute(select_query)
@@ -123,4 +148,3 @@ def excluir_item_por_id():
     except mysql.connector.Error as err:
         print("Erro ao deletar o registro:", err)
         return
-
