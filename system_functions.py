@@ -1,24 +1,9 @@
-from conexao_mysql import testando_conexão, criando_cursor
 import mysql.connector
-
-
-connection = testando_conexão()
-while not connection:
-    try_again = input('falha na conexão, deseja tentar novamente? (s/n)')
-    if try_again == 's':
-        connection = testando_conexão()
-    else:
-        print('Encerrando programa')
-        break
-
-if connection:
-    conn, cursor = criando_cursor()
-else:
-    pass
-
+from conexao_mysql import conn, cursor
 
 ################ REGISTRO E AUTENTICAÇÃO DO USUÁRIO ###############
 logged_user = False
+user_id = None
 
 # Registrar-se
 def user_register(username, password):
@@ -43,6 +28,7 @@ def user_register(username, password):
 # Fazer login
 def login():
     global logged_user
+    global user_id
     username = input('insira seu nome de usuario: ')
     password = input('insira sua senha: ')
     select_query = 'SELECT * FROM usuario WHERE username = %s AND password = %s'
@@ -51,6 +37,7 @@ def login():
     result = cursor.fetchall()
     if result:
         logged_user = True
+        user_id = result[0][0]
         print()
         print('Usuário autenticado com sucesso!')
         return print()
@@ -81,30 +68,43 @@ def logout():
 
 
 
+
 ################ INTERAÇÕES COM O BD ###################
 # busca todos os itens da tabela
 @login_required
-def fetch_all_items(): 
+def get_all_user_items():
+    global user_id
     try:
-        select_query = "SELECT * FROM item"
-        cursor.execute(select_query)
+        select_query ="""
+            SELECT *
+            FROM item
+            JOIN has_itens ON item.has_itens_idhas_itens = has_itens.idhas_itens
+            WHERE has_itens.usuario_idusuario = %s
+            """
+        cursor.execute(select_query, (user_id,))
         resultados = cursor.fetchall()
         print('Itens encontrados:')
         for linha in resultados:
-            print(linha)
+            print('|  id    nome  quantidade')
+            print(f'|  {linha[0]}    {linha[1]}  {linha[2]}')
         return print()
     except mysql.connector.Error as err:
         print("Erro ao conectar ao banco de dados:", err)
         return
 
+# inserir itens
 @login_required
 def inserir_item():
     name = input('insira o item: ')
     quantity = input('insira a quantidade: ')
+    global user_id
     try:
-        insert_query = "INSERT INTO item (name, quantity) VALUES (%s, %s)"
-        valores_insert = (name, quantity)
-        cursor.execute(insert_query, valores_insert)
+        # obter o idhas_itens do usuário
+        cursor.execute("SELECT idhas_itens FROM has_itens WHERE usuario_idusuario = %s", (user_id,))
+        has_itens_id = cursor.fetchone()[0] # salva aqui o id do has_itens do usuário
+
+        # inserir novo item na lista de itens do usuário
+        cursor.execute("INSERT INTO item (name, quantity, has_itens_idhas_itens) VALUES (%s, %s, %s)", (name, quantity, has_itens_id))
         conn.commit()  # Confirma a inserção
         print("Registro inserido com sucesso.")
         return
@@ -112,6 +112,7 @@ def inserir_item():
         print("Erro ao inserir registro no banco de dados:", err)
         return
 
+# atualizar o nome do item
 @login_required
 def atualizar_bd_name():
     id = input('insira o id do item que deseja alterar: ')
@@ -130,6 +131,7 @@ def atualizar_bd_name():
     else:
         print('insira valores válidos.')
 
+# excluir item
 @login_required
 def excluir_item_por_id():
     iditem = input('insira o id do item que deseja excluir: ')

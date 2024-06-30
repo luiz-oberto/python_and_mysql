@@ -1,5 +1,5 @@
 # Obs: de system_funcions import tudo
-from conexao_mysql import testando_conexão
+from conexao_mysql import connection
 from system_functions import *
 
 
@@ -18,7 +18,7 @@ while connection:
 
     # buscar todos os itens da tabela
     if escolha == '1':
-        fetch_all_items()
+        get_all_user_items()
     # inserir itens na tabela
     elif escolha == '2':
         inserir_item()

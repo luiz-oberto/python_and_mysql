@@ -4,10 +4,10 @@ import os
 
 # Configurações de conexão
 config = {
-    'user': 'tester',
-    'password': 'D&vT0peir@',
-    'host': '10.200.228.19',  #9 ou 'localhost' se estiver usando port forwarding
-    'database': 'modelo-despensa',
+    'user': 'user',
+    'password': 'senha',
+    'host': 'seu_host',  #7 ou 'localhost' se estiver usando port forwarding
+    'database': 'model_name',
     'raise_on_warnings': True
 }
 
@@ -46,3 +46,20 @@ def criando_cursor():
 
     except mysql.connector.Error as err:
         print(f"Erro ao conectar ao MySQL: {err}")
+
+
+connection = testando_conexão()
+while not connection:
+    try_again = input('falha na conexão, deseja tentar novamente? (s/n)')
+    if try_again == 's':
+        connection = testando_conexão()
+    else:
+        print('# Encerrando programa #')
+        # conn e cursor devem ser None para não dar erro ao encerrar o programa.
+        conn, cursor = None, None
+        break
+
+if connection:
+    conn, cursor = criando_cursor()
+else:
+    pass
