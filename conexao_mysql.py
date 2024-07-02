@@ -20,7 +20,7 @@ def testando_conexão():
         conn = mysql.connector.connect(**config)
         
         # Criando um cursor
-        cursor = conn.cursor()
+        cursor = conn.cursor(buffered=True)
         
         # Executando uma consulta de teste
         cursor.execute("SELECT DATABASE();")
@@ -40,7 +40,7 @@ def testando_conexão():
 def criando_cursor():
     try:
         conn = mysql.connector.connect(**config)
-        cursor = conn.cursor()
+        cursor = conn.cursor(buffered=True)
         return conn, cursor
 
 

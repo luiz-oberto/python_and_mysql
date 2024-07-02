@@ -110,17 +110,20 @@ def inserir_item():
 # atualizar o nome do item
 # OBS: colocar a opção de alterar quantidade
 @login_required
-def atualizar_bd_name():
-    nome = input('insira o nome do item que deseja alterar: ')
-    new_name = input('insira novo nome: ')
-    if nome and new_name:
+def atualizar_quantidade():
+    global user_id
+    nome = input('insira o nome do item que deseja alterar a quantidade: ')
+    buscar_item = 'SELECT * FROM item WHERE name = %s'
+    cursor.execute(buscar_item, (nome,))
+    resultado = cursor.fetchone()
+    if resultado:
+        quantidade_atualizada = input('insira quantidade atualizada: ')
         try:
-            update_query = "UPDATE item SET name = %s WHERE name = %s"
-            valores_update = (new_name, nome)
+            update_query = "UPDATE item SET quantity = %s WHERE name = %s AND usuario_idusuario = %s"
+            valores_update = (quantidade_atualizada, nome, user_id)
             cursor.execute(update_query, valores_update)
             conn.commit()  # Confirma a atualização
             print("Registro atualizado com sucesso.")
-            return
         except mysql.connector.Error as err:
             print("Erro ao atualizar o registro:", err)
             return
@@ -130,20 +133,26 @@ def atualizar_bd_name():
 # excluir item
 @login_required
 def excluir_item_por_id():
-    nome = input('insira o nome do item que deseja excluir: ')
     global user_id
-    try:
-        select_query = "SELECT name FROM item WHERE name = %s AND usuario_idusuario = %s"
-        values = (nome, user_id)
-        cursor.execute(select_query, values)
-        resultado = cursor.fetchall()
-        confirmacao = input(f'Voce tem certeza que deseja excluir o seguinte item: {resultado[0][0]} [y/n]', )
-        if confirmacao == 'y':
-            delete_query = "DELETE FROM item WHERE name = %s AND usuario_idusuario = %s"
-            cursor.execute(delete_query, values) # -> lembre-se sempre de passar uma tupla no 'values'
-            conn.commit()  # Confirma a exclusão
-            print("Registro deletado com sucesso.")
+    excluir_nome = input('insira o nome do item que deseja excluir: ')
+    buscar_item = 'SELECT * FROM item WHERE name = %s'
+    cursor.execute(buscar_item, (excluir_nome,))
+    resultado = cursor.fetchone()
+    if resultado:
+        try:
+            select_query = "SELECT name FROM item WHERE name = %s AND usuario_idusuario = %s"
+            values = (excluir_nome, user_id)
+            cursor.execute(select_query, values)
+            resultado = cursor.fetchall()
+            confirmacao = input(f'Voce tem certeza que deseja excluir o seguinte item: {resultado[0][0]}? [y/n]', )
+            if confirmacao == 'y':
+                delete_query = "DELETE FROM item WHERE name = %s AND usuario_idusuario = %s"
+                cursor.execute(delete_query, values) # -> lembre-se sempre de passar uma tupla no 'values'
+                conn.commit()  # Confirma a exclusão
+                print("Registro deletado com sucesso.")
+                return
+        except mysql.connector.Error as err:
+            print("Erro ao deletar o registro:", err)
             return
-    except mysql.connector.Error as err:
-        print("Erro ao deletar o registro:", err)
-        return
+    else:
+        print('insira valores válidos.')

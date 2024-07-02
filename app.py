@@ -6,7 +6,7 @@ from system_functions import *
 while connection:
     print("1 - Verificar items")
     print("2 - Inserir item")
-    print("3 - atualizar item")
+    print("3 - alterar quantidade")
     print("4 - Excluir item")
     print("5 - registrar usuário")
     print("6 - login")
@@ -23,7 +23,7 @@ while connection:
         inserir_item()
     # atualizar itens na tabela
     elif escolha == '3':
-        atualizar_bd_name()
+        atualizar_quantidade()
     # excluir itens da tabela
     elif escolha == '4':
         excluir_item_por_id()
