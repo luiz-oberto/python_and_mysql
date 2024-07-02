@@ -14,14 +14,8 @@ def user_register(username, password):
         conn.commit()
         print('Usuário registrado com sucesso!')
         print()
-        # criando lista
-        print(f'Bem vindo, {values[0]}! Estamos criando sua listinha.')
+        print(f'Bem vindo, {values[0]}! faça login para começar a utilizar o seu app!')
         print()
-        user_id = cursor.lastrowid
-        insert_query_has_itens = "INSERT INTO has_itens (usuario_idusuario) VALUES (%s)"
-        cursor.execute(insert_query_has_itens, (user_id,))
-        conn.commit()
-        print("Lista criada com sucesso, faça bom proveito!")
     else:
         print('Valores inválidos para a criação do usuário!')
 
@@ -29,23 +23,25 @@ def user_register(username, password):
 def login():
     global logged_user
     global user_id
-    username = input('insira seu nome de usuario: ')
-    password = input('insira sua senha: ')
-    select_query = 'SELECT * FROM usuario WHERE username = %s AND password = %s'
-    values = (username, password)
-    cursor.execute(select_query, values)
-    result = cursor.fetchall()
-    if result:
-        logged_user = True
-        user_id = result[0][0]
-        print()
-        print('Usuário autenticado com sucesso!')
-        return print()
-    
+    if logged_user:
+        return print('Você já está logado! Se quiser fazer o login em outra conta, por favor, faça o logout')
     else:
-        print()
-        print('Usuário ou senha inválidos!')
-        return 
+        username = input('insira seu nome de usuario: ')
+        password = input('insira sua senha: ')
+        select_query = 'SELECT * FROM usuario WHERE username = %s AND password = %s'
+        values = (username, password)
+        cursor.execute(select_query, values)
+        result = cursor.fetchall()
+        if result:
+            logged_user = True
+            user_id = result[0][0]
+            print()
+            print('Usuário autenticado com sucesso!')
+            return print()
+        else:
+            print()
+            print('Usuário ou senha inválidos!')
+            return 
 
 # verificar se o usuário tá logado
 def login_required(func): 
@@ -63,10 +59,14 @@ def login_required(func):
 @login_required
 def logout():
     global logged_user
+    global user_id
+    user_query = "SELECT username FROM usuario WHERE idusuario = %s"
+    values = (user_id,)
+    cursor.execute(user_query, values)
+    result = cursor.fetchone()    
+    print(f'até a próxima {result[0]}! Bye')
     logged_user = False
-    return print('deixando a sessão...')
-
-
+    return
 
 
 ################ INTERAÇÕES COM O BD ###################
@@ -76,17 +76,17 @@ def get_all_user_items():
     global user_id
     try:
         select_query ="""
-            SELECT *
-            FROM item
-            JOIN has_itens ON item.has_itens_idhas_itens = has_itens.idhas_itens
-            WHERE has_itens.usuario_idusuario = %s
+            SELECT item.name AS item, item.quantity AS quantidade
+            FROM usuario
+            INNER JOIN item ON usuario.idusuario = item.usuario_idusuario
+            WHERE usuario.idusuario = %s
             """
         cursor.execute(select_query, (user_id,))
         resultados = cursor.fetchall()
         print('Itens encontrados:')
+        print('|  nome  quantidade')
         for linha in resultados:
-            print('|  id    nome  quantidade')
-            print(f'|  {linha[0]}    {linha[1]}  {linha[2]}')
+            print(f'|  {linha[0]}    {linha[1]}')
         return print()
     except mysql.connector.Error as err:
         print("Erro ao conectar ao banco de dados:", err)
@@ -99,12 +99,7 @@ def inserir_item():
     quantity = input('insira a quantidade: ')
     global user_id
     try:
-        # obter o idhas_itens do usuário
-        cursor.execute("SELECT idhas_itens FROM has_itens WHERE usuario_idusuario = %s", (user_id,))
-        has_itens_id = cursor.fetchone()[0] # salva aqui o id do has_itens do usuário
-
-        # inserir novo item na lista de itens do usuário
-        cursor.execute("INSERT INTO item (name, quantity, has_itens_idhas_itens) VALUES (%s, %s, %s)", (name, quantity, has_itens_id))
+        cursor.execute("""INSERT INTO item (name, quantity, usuario_idusuario) VALUES (%s, %s, %s)""", (name, quantity, user_id))
         conn.commit()  # Confirma a inserção
         print("Registro inserido com sucesso.")
         return
@@ -113,14 +108,15 @@ def inserir_item():
         return
 
 # atualizar o nome do item
+# OBS: colocar a opção de alterar quantidade
 @login_required
 def atualizar_bd_name():
-    id = input('insira o id do item que deseja alterar: ')
+    nome = input('insira o nome do item que deseja alterar: ')
     new_name = input('insira novo nome: ')
-    if id and new_name:
+    if nome and new_name:
         try:
-            update_query = "UPDATE item SET name = %s WHERE iditem = %s"
-            valores_update = (new_name, id)
+            update_query = "UPDATE item SET name = %s WHERE name = %s"
+            valores_update = (new_name, nome)
             cursor.execute(update_query, valores_update)
             conn.commit()  # Confirma a atualização
             print("Registro atualizado com sucesso.")
@@ -134,16 +130,17 @@ def atualizar_bd_name():
 # excluir item
 @login_required
 def excluir_item_por_id():
-    iditem = input('insira o id do item que deseja excluir: ')
+    nome = input('insira o nome do item que deseja excluir: ')
+    global user_id
     try:
-        select_query = f"SELECT {iditem} FROM item"
-        cursor.execute(select_query)
+        select_query = "SELECT name FROM item WHERE name = %s AND usuario_idusuario = %s"
+        values = (nome, user_id)
+        cursor.execute(select_query, values)
         resultado = cursor.fetchall()
-        confirmacao = input(f'Voce tem certeza que deseja excluir o seguinte item: {resultado} [y/n]', )
+        confirmacao = input(f'Voce tem certeza que deseja excluir o seguinte item: {resultado[0][0]} [y/n]', )
         if confirmacao == 'y':
-            delete_query = "DELETE FROM item WHERE iditem = %s"
-            valores_delete = (iditem)
-            cursor.execute(delete_query, valores_delete)
+            delete_query = "DELETE FROM item WHERE name = %s AND usuario_idusuario = %s"
+            cursor.execute(delete_query, values) # -> lembre-se sempre de passar uma tupla no 'values'
             conn.commit()  # Confirma a exclusão
             print("Registro deletado com sucesso.")
             return

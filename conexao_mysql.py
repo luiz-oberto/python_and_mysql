@@ -4,10 +4,10 @@ import os
 
 # Configurações de conexão
 config = {
-    'user': 'user',
-    'password': 'senha',
+    'user': 'seu_usuario',
+    'password': 'sua_senha',
     'host': 'seu_host',  #7 ou 'localhost' se estiver usando port forwarding
-    'database': 'model_name',
+    'database': 'modelo-despensa',
     'raise_on_warnings': True
 }
 
@@ -48,7 +48,7 @@ def criando_cursor():
         print(f"Erro ao conectar ao MySQL: {err}")
 
 
-############### INICIAR CONEXÃO COM BD #################
+################### FAZENDO A CONEXÃO COM O BD ###################
 connection = testando_conexão()
 while not connection:
     try_again = input('falha na conexão, deseja tentar novamente? (s/n)')
@@ -60,7 +60,7 @@ while not connection:
         conn, cursor = None, None
         break
 
-############### CRIAR CURSOR #################
+################### CRIANDO DO CURSOR ###################
 if connection:
     conn, cursor = criando_cursor()
 else:

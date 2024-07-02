@@ -1,4 +1,3 @@
-# Obs: de system_funcions import tudo
 from conexao_mysql import connection
 from system_functions import *
 
