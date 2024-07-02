@@ -1,7 +1,6 @@
 from conexao_mysql import connection
 from system_functions import *
 
-
 # Interface
 while connection:
     print("1 - Verificar items")
@@ -34,10 +33,10 @@ while connection:
         user_register(nome, senha)
     # login
     elif escolha == '6':
-        login()
+        sessao_usuario.login()
     # logout
     elif escolha == '7':
-        logout()
+       sessao_usuario.logout()
     # sair
     elif escolha == '0':
         print('até a próxima! Bye!')

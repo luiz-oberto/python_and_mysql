@@ -1,13 +1,58 @@
 import mysql.connector
 from conexao_mysql import conn, cursor
+import bcrypt
+
+
+def hash_password(password):
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+
+def check_password(hashed_password, user_password):
+    return bcrypt.checkpw(user_password.encode('utf-8'), hashed_password)
 
 ################ REGISTRO E AUTENTICAÇÃO DO USUÁRIO ###############
-logged_user = False
-user_id = None
+# Classe de sessão do usuário
+class UserSession:
+    def __init__(self):
+        self.logged_user = False
+        self.user_id = None
+    
+    def login(self):
+        if self.logged_user:
+            return print('Você já está logado! Se quiser fazer o login em outra conta, por favor, faça o logout')
+        else:
+            username = input('insira seu nome de usuario: ')
+            password = input('insira sua senha: ')
+            select_query = 'SELECT * FROM usuario WHERE username = %s AND password = %s'
+            values = (username, password)
+            cursor.execute(select_query, values)
+            result = cursor.fetchall()
+            if result:
+                self.logged_user = True
+                self.user_id = result[0][0]
+                print()
+                print('Usuário autenticado com sucesso!')
+                return print()
+            else:
+                print()
+                print('Usuário ou senha inválidos!')
+                return 
 
+    
+    def logout(self):
+        # Lógica de logout
+        user_query = "SELECT username FROM usuario WHERE idusuario = %s"
+        values = (self.user_id,)
+        cursor.execute(user_query, values)
+        result = cursor.fetchone()
+        print(f'até a próxima {result[0]}! Bye')
+        self.logged_user = False
+        return
+    
+    
 # Registrar-se
 def user_register(username, password):
     if username and password:
+        hash_password(password)
         insert_query_has_itens = 'INSERT INTO usuario (username, password) VALUES (%s, %s)'
         values = (username, password)
         cursor.execute(insert_query_has_itens, values)
@@ -19,61 +64,26 @@ def user_register(username, password):
     else:
         print('Valores inválidos para a criação do usuário!')
 
-# Fazer login
-def login():
-    global logged_user
-    global user_id
-    if logged_user:
-        return print('Você já está logado! Se quiser fazer o login em outra conta, por favor, faça o logout')
-    else:
-        username = input('insira seu nome de usuario: ')
-        password = input('insira sua senha: ')
-        select_query = 'SELECT * FROM usuario WHERE username = %s AND password = %s'
-        values = (username, password)
-        cursor.execute(select_query, values)
-        result = cursor.fetchall()
-        if result:
-            logged_user = True
-            user_id = result[0][0]
-            print()
-            print('Usuário autenticado com sucesso!')
-            return print()
-        else:
-            print()
-            print('Usuário ou senha inválidos!')
-            return 
-
-# verificar se o usuário tá logado
-def login_required(func): 
-    def wrapper(*args, **kwargs):
-        global logged_user
-        if not logged_user:
-            print('Você precisa estar logado para utilizar esta funcionanlidade.')
-            login()
-            if not logged_user:
-                return
-        return func(*args, **kwargs)
-    return wrapper
-
-# logout
-@login_required
-def logout():
-    global logged_user
-    global user_id
-    user_query = "SELECT username FROM usuario WHERE idusuario = %s"
-    values = (user_id,)
-    cursor.execute(user_query, values)
-    result = cursor.fetchone()    
-    print(f'até a próxima {result[0]}! Bye')
-    logged_user = False
-    return
 
 
 ################ INTERAÇÕES COM O BD ###################
 # busca todos os itens da tabela
+sessao_usuario = UserSession()
+
+# verificar se o usuário tá logado
+def login_required(func): 
+    def wrapper(*args, **kwargs):
+        if not sessao_usuario.logged_user:
+            print('Você precisa estar logado para utilizar esta funcionanlidade.')
+            sessao_usuario.login()
+            if not sessao_usuario.logged_user:
+                return
+        return func(*args, **kwargs)
+    return wrapper
+
 @login_required
 def get_all_user_items():
-    global user_id
+    user_id = sessao_usuario.user_id
     try:
         select_query ="""
             SELECT item.name AS item, item.quantity AS quantidade
@@ -97,7 +107,7 @@ def get_all_user_items():
 def inserir_item():
     name = input('insira o item: ')
     quantity = input('insira a quantidade: ')
-    global user_id
+    user_id = sessao_usuario.user_id
     try:
         cursor.execute("""INSERT INTO item (name, quantity, usuario_idusuario) VALUES (%s, %s, %s)""", (name, quantity, user_id))
         conn.commit()  # Confirma a inserção
@@ -111,7 +121,7 @@ def inserir_item():
 # OBS: colocar a opção de alterar quantidade
 @login_required
 def atualizar_quantidade():
-    global user_id
+    user_id = sessao_usuario.user_id
     nome = input('insira o nome do item que deseja alterar a quantidade: ')
     buscar_item = 'SELECT * FROM item WHERE name = %s'
     cursor.execute(buscar_item, (nome,))
@@ -133,7 +143,7 @@ def atualizar_quantidade():
 # excluir item
 @login_required
 def excluir_item_por_id():
-    global user_id
+    user_id = sessao_usuario.user_id
     excluir_nome = input('insira o nome do item que deseja excluir: ')
     buscar_item = 'SELECT * FROM item WHERE name = %s'
     cursor.execute(buscar_item, (excluir_nome,))
