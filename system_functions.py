@@ -22,21 +22,30 @@ class UserSession:
         else:
             username = input('insira seu nome de usuario: ')
             password = input('insira sua senha: ')
-            select_query = 'SELECT * FROM usuario WHERE username = %s AND password = %s'
-            values = (username, password)
-            cursor.execute(select_query, values)
-            result = cursor.fetchall()
-            if result:
-                self.logged_user = True
-                self.user_id = result[0][0]
-                print()
-                print('Usuário autenticado com sucesso!')
-                return print()
-            else:
-                print()
-                print('Usuário ou senha inválidos!')
-                return 
+            # hash_passwd = hash_password(password) 
+            select_query_password = 'SELECT password FROM usuario WHERE username = %s'
+            cursor.execute(select_query_password, (username,))
+            result_passwd = cursor.fetchone()
+            if result_passwd:
+                stored_password = result_passwd[0]
+                if isinstance(stored_password, str):
+                    stored_password = stored_password.encode('utf-8')
 
+                if check_password(stored_password, password):
+                    select_query = 'SELECT * FROM usuario WHERE username = %s'
+                    cursor.execute(select_query, (username,))
+                    result = cursor.fetchone()
+
+                    if result:
+                        self.logged_user = True
+                        self.user_id = result[0]
+                        return print('Bem vindo, {}!'.format(username))
+                    else:
+                        print('Erro inesperado')
+                else:
+                    print('Usuário ou senha inválidos!')
+            else:
+                print('Usuário ou senha inválidos!')
     
     def logout(self):
         # Lógica de logout
@@ -52,9 +61,9 @@ class UserSession:
 # Registrar-se
 def user_register(username, password):
     if username and password:
-        hash_password(password)
+        hash_pwd = hash_password(password)
         insert_query_has_itens = 'INSERT INTO usuario (username, password) VALUES (%s, %s)'
-        values = (username, password)
+        values = (username, hash_pwd)
         cursor.execute(insert_query_has_itens, values)
         conn.commit()
         print('Usuário registrado com sucesso!')
@@ -118,7 +127,6 @@ def inserir_item():
         return
 
 # atualizar o nome do item
-# OBS: colocar a opção de alterar quantidade
 @login_required
 def atualizar_quantidade():
     user_id = sessao_usuario.user_id
