@@ -1,6 +1,7 @@
 import mysql.connector
 from conexao_mysql import conn, cursor
 import bcrypt
+import getpass
 
 
 def hash_password(password):
@@ -21,7 +22,8 @@ class UserSession:
             return print('Você já está logado! Se quiser fazer o login em outra conta, por favor, faça o logout')
         else:
             username = input('insira seu nome de usuario: ')
-            password = input('insira sua senha: ')
+            password = getpass.getpass('insira sua senha: ')
+            # vai buscar a senha hasheada do usuário
             select_query_password = 'SELECT password FROM usuario WHERE username = %s'
             cursor.execute(select_query_password, (username,))
             result_passwd = cursor.fetchone()
@@ -29,18 +31,14 @@ class UserSession:
                 stored_password = result_passwd[0]
                 if isinstance(stored_password, str):
                     stored_password = stored_password.encode('utf-8')
-
+                # verifica se as senhas coincidem
                 if check_password(stored_password, password):
                     select_query = 'SELECT * FROM usuario WHERE username = %s'
                     cursor.execute(select_query, (username,))
                     result = cursor.fetchone()
-
-                    if result:
-                        self.logged_user = True
-                        self.user_id = result[0]
-                        return print('Bem vindo, {}!'.format(username))
-                    else:
-                        print('Erro inesperado')
+                    self.logged_user = True
+                    self.user_id = result[0]
+                    return print('Bem vindo, {}!'.format(username))
                 else:
                     print('Usuário ou senha inválidos!')
             else:
@@ -72,7 +70,13 @@ def user_register(username, password):
     else:
         print('Valores inválidos para a criação do usuário!')
 
-# verifica se o usuário tá logado
+
+
+################ INTERAÇÕES COM O BD ###################
+# busca todos os itens da tabela
+sessao_usuario = UserSession()
+
+# verificar se o usuário tá logado
 def login_required(func): 
     def wrapper(*args, **kwargs):
         if not sessao_usuario.logged_user:
@@ -82,9 +86,6 @@ def login_required(func):
                 return
         return func(*args, **kwargs)
     return wrapper
-
-################ INTERAÇÕES COM O BD ###################
-sessao_usuario = UserSession()
 
 @login_required
 def get_all_user_items():
@@ -115,7 +116,7 @@ def inserir_item():
     user_id = sessao_usuario.user_id
     try:
         cursor.execute("""INSERT INTO item (name, quantity, usuario_idusuario) VALUES (%s, %s, %s)""", (name, quantity, user_id))
-        conn.commit() 
+        conn.commit()  # Confirma a inserção
         print("Registro inserido com sucesso.")
         return
     except mysql.connector.Error as err:
@@ -136,7 +137,7 @@ def atualizar_quantidade():
             update_query = "UPDATE item SET quantity = %s WHERE name = %s AND usuario_idusuario = %s"
             valores_update = (quantidade_atualizada, nome, user_id)
             cursor.execute(update_query, valores_update)
-            conn.commit()
+            conn.commit()  # Confirma a atualização
             print("Registro atualizado com sucesso.")
         except mysql.connector.Error as err:
             print("Erro ao atualizar o registro:", err)
@@ -161,8 +162,8 @@ def excluir_item_por_id():
             confirmacao = input(f'Voce tem certeza que deseja excluir o seguinte item: {resultado[0][0]}? [y/n]', )
             if confirmacao == 'y':
                 delete_query = "DELETE FROM item WHERE name = %s AND usuario_idusuario = %s"
-                cursor.execute(delete_query, values)
-                conn.commit()
+                cursor.execute(delete_query, values) # -> lembre-se sempre de passar uma tupla no 'values'
+                conn.commit()  # Confirma a exclusão
                 print("Registro deletado com sucesso.")
                 return
         except mysql.connector.Error as err:

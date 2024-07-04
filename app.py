@@ -1,5 +1,6 @@
 from conexao_mysql import connection
 from system_functions import *
+import getpass
 
 # Interface
 while connection:
@@ -29,7 +30,7 @@ while connection:
     # registrar usuário
     elif escolha == '5':
         nome = input('insira o nome do usuario: ')
-        senha = input('insira a senha do usuario: ')
+        senha = getpass.getpass('insira a senha do usuario: ')
         user_register(nome, senha)
     # login
     elif escolha == '6':
